@@ -1,0 +1,53 @@
+- name: "Configuration Play"
+  # Targets
+  # You can target one or more machines with just one Ansible Playlist. Each play in a Playbook should have
+  # hosts section where you can select machines that you want to configure. You can specify one hostname, a 
+  # group name or user a pattern to select multiple hosts fron an inventory list.
+  
+  # An inventory file can be very powerful and complex, but it can also be extremely simple. 
+  # On the easy extreme, the inventory file is just a list of DNS hostnames or IP addresses in a group 
+  # labeled by a ["group_name"] in typical INI style. This is what it looks like.
+
+  # [web]
+  # ec2-50-16-166-50.compute-1.amazonaws.com
+  #  this is being referred to in the Playbook host line
+  hosts: web
+
+  # Authentication
+  # Note that this user will depend on the type of server that you are using. If it is an ubuntu server.
+  # you can change this to a different user based on the server instance you are using.
+  # You will also need an SSH Key, also known as the key pair or the PEM file. This would be associated with the 
+  # default user
+  user: ubuntu
+  gather_facts: false
+  vars:
+    - ansible_python_interpreter: /usr/bin/python3
+    - ansible_host_key_checking: false
+    - ansible_stdout_callback: yaml
+  
+  pre_tasks:
+    - name: "wait 600 seconds for target connection to become reachable/usable."
+      wait_for_connection:
+
+    - name: "Install python for Ansible"
+      become: true
+      raw: test -e /usr/bin/python3 || (apt -y update && apt install -y python3)
+      changed_when: false
+
+    - setup:
+
+  # Roles
+  # roles are greate way to clean up Ansible code and make it more maintainable. 
+  # We can build roles by using Ansible's expected folder/file structure
+  # roles/
+  #   configure-prometheus-node-exporter/
+  #       tasks/
+  #           main.yml
+  #       files/
+  #           main.yml
+  #   configure-server/
+  #       tasks/
+  #           main.yml
+  roles:
+    - configure-prometheus-node-exporter
+    - configure-server1
